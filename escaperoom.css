@@ -1,0 +1,14 @@
+div#puzzleentrycontainer {
+	display: none;
+}
+div#puzzleentrycontainer.active {
+	display:block !important;
+}
+
+div#cardid {
+	font-weight: bold;
+	font-size: 14px;
+}
+div#cardid::before {
+	content: "Card #";
+}
