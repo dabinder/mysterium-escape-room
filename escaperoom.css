@@ -12,3 +12,37 @@ div#cardid {
 div#cardid::before {
 	content: "Card #";
 }
+
+div#cardfields img {
+	min-width: 50px;
+	min-height: 50px;
+	max-width: 100px;
+	max-height: 100px;
+	border: black solid thin;
+}
+
+div#cardfields img.selectedimage {
+	display: block;
+}
+
+div#cardfields > span.imagefield > div.imagedropdown {
+	display: none;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	align-items: flex-start;
+	position: absolute;
+	background-color: white;
+	max-height: 250px;
+	overflow-y: auto;
+	overflow-x: visible;
+	width: 125px;
+}
+
+div#cardfields > span.imagefield.active > div.imagedropdown {
+	display: inline-flex;	
+}
+
+div#cardfields div.imagedropdown > img:hover {
+	background-color: gray;
+}

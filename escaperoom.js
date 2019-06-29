@@ -1,8 +1,11 @@
 (function () {
 	const INPUT_TYPES = {
-		NUMERIC: 'numeric'
+		NUMERIC: 'numeric',
+		IMAGE: 'image'
 	};
 	
+	let submittedCards = [];
+
 	class Input {
 		/**
 		 * create new generic input
@@ -15,13 +18,13 @@
 			if (this.constructor === Input) {
 				throw new TypeError("Input may not be directly instantiated");
 			}
-			
+
 			this.type = type;
 			this.numFields = numFields;
 			this.instructions = instructions;
 		}
 	}
-	
+
 	class NumericInput extends Input {
 		/**
 		 * create new numeric input set
@@ -35,13 +38,33 @@
 				instructions += " between " + min + " and " + max + " (inclusive)";
 			}
 			if (numFields > 1) instructions += " in each field. No field may be left blank.";
-			
+
 			super(INPUT_TYPES.NUMERIC, numFields, instructions);
 			this.min = min;
 			this.max = max;
 		}
 	}
-	
+
+	class ImageInput extends Input {
+		/**
+		 * create new image input set
+		 * @param {Number} numFields number of dropdown fields
+		 * @param {String} folderName name of image folder containing entries for this input 
+		 * @param {Number} numImages number of image entries for this field
+		 */
+		constructor(numFields, folderName, numImages) {
+			let instructions = "Click ";
+			instructions += (numFields > 1) ?
+				"each" :
+				"the";
+			instructions += " box to select an image";
+
+			super(INPUT_TYPES.IMAGE, numFields, instructions);
+			this.folderName = folderName;
+			this.numImages = numImages;
+		}
+	}
+
 	class Card {
 		/**
 		 * create new card, track relevant info
@@ -52,7 +75,7 @@
 		 * @param {String} failure message to display on failure
 		 * @param {object} collectItems array of items to collect on success
 		 */
-		constructor (id, input, expectedValues, success, failure, collectItems) {
+		constructor(id, input, expectedValues, success, failure, collectItems) {
 			this.id = id;
 			this.input = input;
 			if (!Array.isArray(expectedValues) || expectedValues.length != input.numFields) {
@@ -67,7 +90,7 @@
 			this.collectItems = collectItems;
 		}
 	}
-	
+
 	class CardSet extends Map {
 		/**
 		 * and add a new card to the set
@@ -82,7 +105,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * incorrect entry in field
 	 * @param {String} message message to display
@@ -90,10 +113,10 @@
 	function failedEntry(message) {
 		//TODO: replace alert with floating div
 		alert(message + ". You have lost one minute.");
-		
+
 		//TODO: subtract from timer
 	}
-	
+
 	//listen for card entries
 	document.addEventListener("DOMContentLoaded", function () {
 		let actionFlowContainer = document.getElementById("actionflowcontainer"),
@@ -104,7 +127,7 @@
 			cardId = document.getElementById("cardid"),
 			inputInstructions = document.getElementById("inputinstructions"),
 			cardFields = document.getElementById("cardfields");
-			
+
 		//enter card number to view puzzle entry field
 		cardEntryForm.addEventListener("submit", function (event) {
 			event.preventDefault();
@@ -117,9 +140,9 @@
 				cardFields.innerHTML = "";
 				inputInstructions.textContent = input.instructions;
 				puzzleEntryForm.dataset.currentCard = id;
-				
-				switch(input.type) {
-					case INPUT_TYPES.NUMERIC :
+
+				switch (input.type) {
+					case INPUT_TYPES.NUMERIC:
 						for (let i = 0; i < input.numFields; i++) {
 							let field = document.createElement("input");
 							field.type = "number";
@@ -135,12 +158,48 @@
 							cardFields.appendChild(field);
 						}
 						break;
+
+					case INPUT_TYPES.IMAGE:
+						for (let i = 0; i < input.numFields; i++) {
+							let field = document.createElement("input");
+							field.type = "hidden";
+							field.name = "puzzlefield" + i;
+
+							let span = document.createElement("span");
+							span.className = "imagefield";
+							let selectedImage = document.createElement("img");
+							selectedImage.className = "selectedimage";
+							cardFields.appendChild(field);
+							span.appendChild(selectedImage);
+							let dropdown = document.createElement("div");
+							dropdown.className = "imagedropdown";
+							for (let j = 1; j <= input.numImages; j++) {
+								let dropdownImage = document.createElement("img");
+								dropdownImage.src = "images/" + input.folderName + "/img_" + j + ".png";
+								dropdownImage.addEventListener("click", function (event) {
+									span.classList.remove("active");
+									selectedImage.src = this.src;
+									field.value = j;
+								}, false);
+								dropdown.appendChild(dropdownImage);
+							}
+							span.appendChild(dropdown);
+							selectedImage.addEventListener("click", function (click) {
+								if (span.classList.contains("active")) {
+									span.classList.remove("active");
+								} else {
+									span.classList.add("active");
+								}
+							}, false);
+							cardFields.appendChild(span);
+						}
+						break;
 				}
 			} else {
 				//TODO: replace alert with a floating div
 				alert("Please enter a valid card number");
 			}
-			
+
 		}, false);
 		
 		//submit puzzle form
@@ -149,7 +208,7 @@
 			let id = parseInt(this.dataset.currentCard),
 				card = cards.get(id),
 				numFields = card.input.numFields;
-				
+
 			for (let i = 0; i < numFields; i++) {
 				let value = this.elements["puzzlefield" + i].value;
 				//make sure they entered something in the field
@@ -181,12 +240,68 @@
 			puzzleEntryContainer.classList.remove("active");
 			cardFields.innerHTML = "";
 			cardEntryForm.reset();
+			
+			//add to list of submitted cards
+			submittedCards.push(id);
 		}, false);
+		
+		//clear image inputs on reset
+		puzzleEntryForm.addEventListener("reset", function (event) {
+			let id = parseInt(this.dataset.currentCard),
+				card = cards.get(id);
+			if (card.input.type == INPUT_TYPES.IMAGE) {
+				//clear hidden inputs
+				for (let i = 0; i < this.elements.length; i++) {
+					let element = this.elements[i];
+					if (element.type == "hidden") element.value = "";
+				}
+				
+				//reset image display
+				let images = this.getElementsByClassName("selectedimage");
+				for (let i = 0; i < images.length; i++) {
+					images[i].src = "";
+				}
+			}
+		}, false);	
+	}, false);
+	
+	/**
+	 * @summary check whether given coordinates are located inside given element boundaries
+	 * @param {HTMLElement} element element to check
+	 * @param {number} x x coordinate
+	 * @param {number} y y coordinate
+	 * @returns {boolean} element contains coordinates
+	 */
+	function containsCoordinates(element, x, y) {
+		if (!(element instanceof HTMLElement)) return false;
+		//check children; absolutely positioned elements may not include child coordinates
+		let childNodes = element.childNodes;
+		for (let i = 0; i < childNodes.length; i++) {
+			if (containsCoordinates(childNodes[i], x, y)) return true;
+		}
+		let bounds = element.getBoundingClientRect();
+		return (
+			x >= bounds.left &&
+			x <= bounds.right &&
+			y >= bounds.top &&
+			y <= bounds.bottom
+		);
+	}
+
+	//remove active image dropdown(s) on clicking elsewhere on the page
+	document.addEventListener("mousedown", function (event) {
+		let activeElts = document.querySelectorAll("span.imagefield.active");
+		for (let i = 0; i < activeElts.length; i++) {
+			let dropdown = activeElts[i].getElementsByClassName("imagedropdown")[0];
+			if (!containsCoordinates(dropdown, event.clientX, event.clientY)) {
+				activeElts[i].classList.remove("active");
+			}
+		}
 	}, false);
 	
 	//set of card => field mappings
 	let cards = new CardSet();
-	
+
 	//Tomahna
 	cards.addCard(new Card(19,
 		new NumericInput(),
@@ -216,17 +331,15 @@
 		"The box doesn't open",
 		['LK']
 	));
-	
+
 	//Kadish Tolesa
-	/*
 	cards.addCard(new Card(5,
-		//new ImageInput
+		new ImageInput(1, "relto_pages", 8),
 		[3], //gehn's cannen
 		"You notice the image resembles Gehn's cannen",
 		"Nothing happens",
 		[17, 'E']
 	));
-	*/
 	cards.addCard(new Card(17,
 		new NumericInput(),
 		[20],
@@ -234,9 +347,9 @@
 		"Nothing happens",
 		['LC', 'F']
 	));
-	
+
 	//Channelwood
-	card.addCard(new Card(31,
+	cards.addCard(new Card(31,
 		new NumericInput(1, 1, 8),
 		[7],
 		"You open the drawer to find a familiar-looking symbol",
@@ -245,14 +358,14 @@
 	));
 	/*
 	cards.addCard(new Card(8,
-		new ImageInput
+		new ImageInput(1, "selenitic_sounds", 5),
 		[4], //chasm
 		"You see a message from Sirrus to Achenar. While much of it is rather cryptic, he reminds his brother where to find the linking book he hid",
 		"You see a nonsensical message from Achenar",
 		['LR', 'G']
 	));
 	*/
-	
+
 	//Riven
 	cards.addCard(new Card(3,
 		new NumericInput(3, 1, 9),
@@ -263,7 +376,7 @@
 	));
 	/*
 	cards.addCard(new Card(39,
-		new ImageInput
+		new ImageInput(4, "moiety_animals", 25),
 		[3, 12, 16, 20], //bat, elephant, mole, whark
 		"The incinerator door opens. Fortunately the linking book inside is unburned",
 		"The door doesn't open",
