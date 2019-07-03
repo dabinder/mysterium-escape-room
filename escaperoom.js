@@ -438,7 +438,6 @@
 		"The drawer doesn't open.",
 		[29]
 	));
-	/*
 	cards.addCard(new Card(8,
 		new ImageInput(1, "selenitic_sounds", 5),
 		[4], //chasm
@@ -446,7 +445,6 @@
 		"You see a nonsensical message from Achenar.",
 		['LR', 'G']
 	));
-	*/
 
 	//Riven
 	cards.addCard(new Card(3,

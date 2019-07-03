@@ -45,7 +45,7 @@ div#cardfields > span.imagefield:not(.active) > div.imagedropdown {
 }
 
 div#cardfields div.imagedropdown > img:hover {
-	background-color: gray;
+	background-color: lightcyan;
 }
 
 
