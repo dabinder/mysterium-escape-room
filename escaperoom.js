@@ -3,7 +3,18 @@
 		NUMERIC: 'numeric',
 		IMAGE: 'image'
 	};
-	
+
+	//indicate prerequisites for accessing a particular card (e.g. card 3 must be completed before card 39)
+	const DEPENDENCIES = {
+		39: [3]
+	};
+
+	//final card provides alternate ending card after running out of time
+	const FINAL_CARD = {
+		id: 39,
+		timeout: 'LS'
+	}
+
 	let submittedCards = [];
 
 	class Input {
@@ -111,10 +122,46 @@
 	 * @param {String} message message to display
 	 */
 	function failedEntry(message) {
-		//TODO: replace alert with floating div
-		alert(message + ". You have lost one minute.");
+		popupMessage(message + " You have lost one minute.", true);
 
 		//TODO: subtract from timer
+	}
+
+	/**
+	 * popup notification in corner of screen
+	 * @param {String} message message to display
+	 * @param {boolean} autoDismiss automatically dismiss message
+	 */
+	function popupMessage(message, autoDismiss) {
+		let noticeArea = document.createElement("div");
+		noticeArea.className = "popupnotice off";
+		let div = document.createElement("div");
+		div.textContent = message;
+		let midDiv = document.createElement("div");
+		midDiv.appendChild(div);
+		midDiv.className = "popupcontent";
+		noticeArea.appendChild(midDiv);
+		document.body.appendChild(noticeArea);
+		var x = noticeArea.clientHeight; //hack to get this to work in FF
+		noticeArea.className = "popupnotice";
+		
+		if (autoDismiss) {
+			//fade after 5 seconds
+			setTimeout(function () {
+				noticeArea.className = "popupnotice fade";
+			}, 5 * 1000);
+			//remove after 6 seconds
+			setTimeout(function () {
+				noticeArea.parentNode.removeChild(noticeArea);
+			}, 6 * 1000);
+		} else {
+			let close = document.createElement("div");
+			close.className = "close";
+			noticeArea.appendChild(close);
+			close.addEventListener("click", function (click){
+				noticeArea.parentNode.removeChild(noticeArea);
+			}, false);
+		}
 	}
 
 	//listen for card entries
@@ -133,6 +180,17 @@
 			event.preventDefault();
 			let id = parseInt(this.elements.cardnumber.value);
 			if (cards.has(id)) {
+				//check for required sequence when applicable
+				if (DEPENDENCIES.hasOwnProperty(id)) {
+					for (let i = 0; i < DEPENDENCIES[id].length; i++) {
+						let card = DEPENDENCIES[id][i];
+						if (!submittedCards.includes(card)) {
+							popupMessage("This input is not yet available", true);
+							return;
+						}
+					}
+				}
+
 				let card = cards.get(id),
 					input = card.input;
 				puzzleEntryContainer.classList.add("active");
@@ -189,6 +247,9 @@
 									span.classList.remove("active");
 								} else {
 									span.classList.add("active");
+									let coordinates = getAbsoluteCoordinates(this);
+									dropdown.style.left = coordinates.x + "px";
+									dropdown.style.top = coordinates.y + this.offsetHeight + "px";
 								}
 							}, false);
 							cardFields.appendChild(span);
@@ -196,12 +257,11 @@
 						break;
 				}
 			} else {
-				//TODO: replace alert with a floating div
-				alert("Please enter a valid card number");
+				popupMessage("Please enter a valid card number", true);
 			}
 
 		}, false);
-		
+
 		//submit puzzle form
 		puzzleEntryForm.addEventListener("submit", function (event) {
 			event.preventDefault();
@@ -213,11 +273,10 @@
 				let value = this.elements["puzzlefield" + i].value;
 				//make sure they entered something in the field
 				if (value == "") {
-					//TODO: replace alert with floating div
 					let message = "Enter a value";
 					if (numFields > 1) message += " in each field";
 					message += " before clicking submit";
-					alert(message);
+					popupMessage(message, true);
 					return;
 				} else if (value != card.expectedValues[i]) {
 					failedEntry(card.failure);
@@ -226,25 +285,28 @@
 					return;
 				}
 			}
-			
+
 			//if we made it to the end with no failure, then give success message
-			let message = card.success + ". Collect the following items:";
-			card.collectItems.forEach(function (item) {
-				message += (isNaN(item) && !item.match(/^L[A-Z]$/) ? " Envelope " : " Card ") + item + ',';
-			});
-			message = message.slice(0, -1); //remove trailing comma
-			//TODO: replace alert with floating div (or maybe desktop notification)
-			alert(message);
-			
+			let message = card.success + " Collect the following items:";
+			if (FINAL_CARD.id == card.id && false /* add timeout condition */ ) {
+				message += " Card " + FINAL_CARD.timeout;
+			} else {
+				card.collectItems.forEach(function (item) {
+					message += (isNaN(item) && !item.match(/^L[A-Z]$/) ? " Envelope " : " Card ") + item + ',';
+				});
+				message = message.slice(0, -1); //remove trailing comma
+			}
+			popupMessage(message, false);
+
 			//reset form for next card
 			puzzleEntryContainer.classList.remove("active");
 			cardFields.innerHTML = "";
 			cardEntryForm.reset();
-			
+
 			//add to list of submitted cards
 			submittedCards.push(id);
 		}, false);
-		
+
 		//clear image inputs on reset
 		puzzleEntryForm.addEventListener("reset", function (event) {
 			let id = parseInt(this.dataset.currentCard),
@@ -255,16 +317,16 @@
 					let element = this.elements[i];
 					if (element.type == "hidden") element.value = "";
 				}
-				
+
 				//reset image display
 				let images = this.getElementsByClassName("selectedimage");
 				for (let i = 0; i < images.length; i++) {
 					images[i].src = "";
 				}
 			}
-		}, false);	
+		}, false);
 	}, false);
-	
+
 	/**
 	 * @summary check whether given coordinates are located inside given element boundaries
 	 * @param {HTMLElement} element element to check
@@ -288,6 +350,26 @@
 		);
 	}
 
+	/**
+	 * @summary get coordinates of element in scroll
+	 * @param {HTMLElement} element element to locate
+	 * @returns {Object} object containing coordinates x and y
+	 */
+	function getAbsoluteCoordinates(element) {
+		if (element instanceof HTMLElement) {
+			let bounds = element.getBoundingClientRect();
+			return {
+				x: bounds.left,
+				y: bounds.top
+			};
+		} else {
+			return {
+				x: 0,
+				y: 0
+			};
+		}
+	}
+
 	//remove active image dropdown(s) on clicking elsewhere on the page
 	document.addEventListener("mousedown", function (event) {
 		let activeElts = document.querySelectorAll("span.imagefield.active");
@@ -298,7 +380,7 @@
 			}
 		}
 	}, false);
-	
+
 	//set of card => field mappings
 	let cards = new CardSet();
 
@@ -306,29 +388,29 @@
 	cards.addCard(new Card(19,
 		new NumericInput(),
 		[7],
-		"The drawer opens to reveal a note and another strange 3D object",
-		"The key does not seem to fit here",
+		"The drawer opens to reveal a note and another strange 3D object.",
+		"The key does not seem to fit here.",
 		[26, 'B']
 	));
 	cards.addCard(new Card(21,
 		new NumericInput(4, 0, 9),
 		[0, 2, 4, 0],
-		"An image appears on the control panel's screen",
-		"Nothing happens",
+		"An image appears on the control panel's screen.",
+		"Nothing happens.",
 		[37]
 	));
 	cards.addCard(new Card(18,
 		new NumericInput(4, 1, 12),
 		[1, 4, 5, 11],
-		"You open the case to reveal even more 3D objects",
-		"You fail to open the case",
+		"You open the case to reveal even more 3D objects.",
+		"You fail to open the case.",
 		['C']
 	));
 	cards.addCard(new Card(16,
 		new NumericInput(),
 		[46],
-		"You open the locked box to find a linking book",
-		"The box doesn't open",
+		"You open the locked box to find a linking book.",
+		"The box doesn't open.",
 		['LK']
 	));
 
@@ -336,15 +418,15 @@
 	cards.addCard(new Card(5,
 		new ImageInput(1, "relto_pages", 8),
 		[3], //gehn's cannen
-		"You notice the image resembles Gehn's cannen",
-		"Nothing happens",
+		"You notice the image resembles Gehn's cannen.",
+		"Nothing happens.",
 		[17, 'E']
 	));
 	cards.addCard(new Card(17,
 		new NumericInput(),
 		[20],
-		"After successfully assembling the tiles, a panel opens on the far side and you find a linking book and another 3D object",
-		"Nothing happens",
+		"After successfully assembling the tiles, a panel opens on the far side and you find a linking book and another 3D object.",
+		"Nothing happens.",
 		['LC', 'F']
 	));
 
@@ -352,16 +434,16 @@
 	cards.addCard(new Card(31,
 		new NumericInput(1, 1, 8),
 		[7],
-		"You open the drawer to find a familiar-looking symbol",
-		"The drawer doesn't open",
+		"You open the drawer to find a familiar-looking symbol.",
+		"The drawer doesn't open.",
 		[29]
 	));
 	/*
 	cards.addCard(new Card(8,
 		new ImageInput(1, "selenitic_sounds", 5),
 		[4], //chasm
-		"You see a message from Sirrus to Achenar. While much of it is rather cryptic, he reminds his brother where to find the linking book he hid",
-		"You see a nonsensical message from Achenar",
+		"You see a message from Sirrus to Achenar. While much of it is rather cryptic, he reminds his brother where to find the linking book he hid.",
+		"You see a nonsensical message from Achenar.",
 		['LR', 'G']
 	));
 	*/
@@ -371,15 +453,15 @@
 		new NumericInput(3, 1, 9),
 		[1, 6, 4],
 		"Inside the drawer you find yet another 3D animal. You also hear the control panel on the incinerator come to life.",
-		"The drawer doesn't open",
+		"The drawer doesn't open.",
 		['H']
 	));
 	/*
 	cards.addCard(new Card(39,
 		new ImageInput(4, "moiety_animals", 25),
-		[3, 12, 16, 20], //bat, elephant, mole, whark
-		"The incinerator door opens. Fortunately the linking book inside is unburned",
-		"The door doesn't open",
+		[5, 24, 13, 4], //bat, elephant, mole, whark
+		"The incinerator door opens. Fortunately the linking book inside is unburned.",
+		"The door doesn't open.",
 		['LA'] //need to collect LS on time out
 	));
 	*/

@@ -1,14 +1,20 @@
+body {
+	overflow-x: hidden;
+}
+
 div#puzzleentrycontainer {
 	display: none;
 }
+
 div#puzzleentrycontainer.active {
-	display:block !important;
+	display: block !important;
 }
 
 div#cardid {
 	font-weight: bold;
 	font-size: 14px;
 }
+
 div#cardid::before {
 	content: "Card #";
 }
@@ -22,15 +28,10 @@ div#cardfields img {
 }
 
 div#cardfields img.selectedimage {
-	display: block;
+	vertical-align: top;
 }
 
 div#cardfields > span.imagefield > div.imagedropdown {
-	display: none;
-	flex-direction: column;
-	flex-wrap: nowrap;
-	justify-content: flex-start;
-	align-items: flex-start;
 	position: absolute;
 	background-color: white;
 	max-height: 250px;
@@ -39,10 +40,65 @@ div#cardfields > span.imagefield > div.imagedropdown {
 	width: 125px;
 }
 
-div#cardfields > span.imagefield.active > div.imagedropdown {
-	display: inline-flex;	
+div#cardfields > span.imagefield:not(.active) > div.imagedropdown {
+	display: none;
 }
 
 div#cardfields div.imagedropdown > img:hover {
 	background-color: gray;
+}
+
+
+/* popup notices */
+div.popupnotice {
+	position: absolute;
+	width: 300px;
+	min-height: 50px;
+	resize: both;
+	bottom: 10px;
+	left: 5px;
+	margin: auto;
+	opacity: 1;
+	border-style: ridge;
+	border-radius: 5px;
+	border-color: gray;
+	box-shadow: 5px 5px 5px #AAAAAA;
+	background-color: darkcyan;
+	transition: left .25s, opacity .5s;
+	z-index: 999;
+	vertical-align: middle;
+}
+
+div.popupnotice.off {
+	left: -300px;
+}
+
+div.popupnotice > div.popupcontent {
+	height: 100%;
+	width: 100%;
+	min-height: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+div.popupnotice > div.popupcontent > div {
+	text-align: center;
+	margin: auto;
+	padding: 0 12.5px;
+}
+
+div.popupnotice.fade {
+	opacity: 0;
+}
+
+div.popupnotice > div.close::before {
+	content: "X";
+	right: 0;
+	top: 0;
+	position: absolute;
+	text-align: right;
+	border: thin solid;
+	color: white;
+	background-color: red;
 }
