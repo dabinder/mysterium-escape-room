@@ -85,8 +85,9 @@
 		 * @param {String} success message to display on success
 		 * @param {String} failure message to display on failure
 		 * @param {object} collectItems array of items to collect on success
+		 * @param {object} discardItems array of items to discard on success (cards no longer used after this point)
 		 */
-		constructor(id, input, expectedValues, success, failure, collectItems) {
+		constructor(id, input, expectedValues, success, failure, collectItems, discardItems) {
 			this.id = id;
 			this.input = input;
 			if (!Array.isArray(expectedValues) || (expectedValues.length > 0 && expectedValues.length != input.numFields)) {
@@ -99,6 +100,7 @@
 			this.success = success;
 			this.failure = failure;
 			this.collectItems = collectItems;
+			this.discardItems = discardItems;
 		}
 	}
 
@@ -298,9 +300,18 @@
 				message += " Card " + FINAL_CARD.timeout;
 			} else {
 				card.collectItems.forEach(function (item) {
+					if (!isNaN(item) && parseInt(item) < 10) item = "0" + item;
 					message += (isNaN(item) && !item.match(/^L[A-Z]$/) ? " Envelope " : " Card ") + item + ',';
 				});
 				message = message.slice(0, -1); //remove trailing comma
+			}
+			if (card.discardItems.length > 0) {
+				message += ". Discard the following cards: ";
+				card.discardItems.forEach (function (item) {
+					if (parseInt(item) < 10) item = "0" + item;
+					message += item + ", ";
+				});
+				message = message.slice(0, -2); //remove trailing comma
 			}
 			popupMessage(message, false);
 
@@ -396,6 +407,7 @@
 		[],
 		"",
 		"The key does not seem to fit here.",
+		[],
 		[]
 	));
 	cards.addCard(new Card(11,
@@ -403,6 +415,7 @@
 		[],
 		"",
 		"The key does not seem to fit here.",
+		[],
 		[]
 	));
 	cards.addCard(new Card(7,
@@ -410,28 +423,32 @@
 		[19],
 		"The drawer opens to reveal a note and another strange 3D object.",
 		"The key does not seem to fit here.",
-		[26, 'B']
+		[26, 'B'],
+		[7, 19]
 	));
 	cards.addCard(new Card(21,
 		new NumericInput(4, 0, 9),
 		[0, 2, 4, 0],
 		"An image appears on the control panel's screen.",
 		"Nothing happens.",
-		[37]
+		[37],
+		[21, 26]
 	));
 	cards.addCard(new Card(18,
 		new NumericInput(4, 1, 12),
 		[1, 4, 5, 11],
 		"You open the case to reveal even more 3D objects.",
 		"You fail to open the case.",
-		['C']
+		['C'],
+		[18, 37]
 	));
 	cards.addCard(new Card(16,
 		new NumericInput(),
 		[49],
 		"You open the locked box to find a linking book.",
 		"The box doesn't open.",
-		['LK']
+		['LK'],
+		[6, 11, 16]
 	));
 
 	//Kadish Tolesa
@@ -440,14 +457,16 @@
 		[3], //gehn's cannen
 		"You notice the image resembles Gehn's cannen.",
 		"Nothing happens.",
-		[17, 'E']
+		[17, 'E'],
+		[5]
 	));
 	cards.addCard(new Card(17,
 		new NumericInput(),
 		[20],
 		"After successfully assembling the tiles, a panel opens on the far side and you find a linking book and another 3D object.",
 		"Nothing happens.",
-		['LC', 'F']
+		['LC', 'F'],
+		[17]
 	));
 
 	//Channelwood
@@ -456,14 +475,16 @@
 		[7],
 		"You open the drawer to find a familiar-looking symbol.",
 		"The drawer doesn't open.",
-		[29]
+		[29],
+		[31]
 	));
 	cards.addCard(new Card(8,
 		new ImageInput(1, "selenitic_sounds", 5),
 		[4], //chasm
 		"You see a message from Sirrus to Achenar. While much of it is rather cryptic, he reminds his brother where to find the linking book he hid.",
 		"You see a nonsensical message from Achenar.",
-		['LR', 'G']
+		['LR', 'G'],
+		[2, 8, 14, 15, 23, 29]
 	));
 	
 	//Riven
@@ -472,21 +493,24 @@
 		[1, 6, 4],
 		"Inside the drawer you find yet another 3D animal. You also hear the control panel on the incinerator come to life.",
 		"The drawer doesn't open.",
-		['H']
+		['H'],
+		[1, 3, 9, 12]
 	));
 	cards.addCard(new Card(25,
 		new NumericInput(),
 		[34],
 		"As you crush the hollow egg, out tumble a handful of fire marbles.",
 		"Nothing happens.",
-		[1]
+		[1],
+		[25, 34]
 	));
 	cards.addCard(new Card(42,
 		new NumericInput(),
 		[22],
 		"Focusing the lens on the blurry text of the paper reveals a clear message.",
 		"The text is still indecipherable.",
-		[9]
+		[9],
+		[22, 42]
 	));
 	/*
 	cards.addCard(new Card(39,
@@ -494,7 +518,8 @@
 		[5, 24, 13, 4], //bat, elephant, mole, whark
 		"The incinerator door opens. Fortunately the linking book inside is unburned.",
 		"The door doesn't open.",
-		['LA'] //need to collect LS on time out
+		['LA'], //need to collect LS on time out
+		[39]
 	));
 	*/
 })();
