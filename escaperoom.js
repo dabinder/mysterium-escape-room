@@ -89,7 +89,7 @@
 		constructor(id, input, expectedValues, success, failure, collectItems) {
 			this.id = id;
 			this.input = input;
-			if (!Array.isArray(expectedValues) || expectedValues.length != input.numFields) {
+			if (!Array.isArray(expectedValues) || (expectedValues.length > 0 && expectedValues.length != input.numFields)) {
 				throw new TypeError("Expected values must be an array of correct values. Number of items must match number of fields in input");
 			}
 			if (!Array.isArray(collectItems)) {
@@ -222,7 +222,7 @@
 							let field = document.createElement("input");
 							field.type = "hidden";
 							field.name = "puzzlefield" + i;
-
+							
 							let span = document.createElement("span");
 							span.className = "imagefield";
 							let selectedImage = document.createElement("img");
@@ -278,10 +278,16 @@
 					message += " before clicking submit";
 					popupMessage(message, true);
 					return;
+				} else if (card.expectedValues.length == 0) {
+					//empty expected values for red herring / fake fields with no correct entries
+					failedEntry(card.failure);
+					success = false;
+					this.reset();
+					return;
 				} else if (value != card.expectedValues[i]) {
 					failedEntry(card.failure);
 					success = false;
-					this.reset(); //remove this line if we don't want to clear inputs on failure
+					this.reset();
 					return;
 				}
 			}
@@ -380,14 +386,28 @@
 			}
 		}
 	}, false);
-
+	
 	//set of card => field mappings
 	let cards = new CardSet();
-
+	
 	//Tomahna
-	cards.addCard(new Card(19,
+	cards.addCard(new Card(6,
 		new NumericInput(),
-		[7],
+		[],
+		"",
+		"The key does not seem to fit here.",
+		[]
+	));
+	cards.addCard(new Card(11,
+		new NumericInput(),
+		[],
+		"",
+		"The key does not seem to fit here.",
+		[]
+	));
+	cards.addCard(new Card(7,
+		new NumericInput(),
+		[19],
 		"The drawer opens to reveal a note and another strange 3D object.",
 		"The key does not seem to fit here.",
 		[26, 'B']
@@ -408,7 +428,7 @@
 	));
 	cards.addCard(new Card(16,
 		new NumericInput(),
-		[46],
+		[49],
 		"You open the locked box to find a linking book.",
 		"The box doesn't open.",
 		['LK']
@@ -445,7 +465,7 @@
 		"You see a nonsensical message from Achenar.",
 		['LR', 'G']
 	));
-
+	
 	//Riven
 	cards.addCard(new Card(3,
 		new NumericInput(3, 1, 9),
@@ -453,6 +473,20 @@
 		"Inside the drawer you find yet another 3D animal. You also hear the control panel on the incinerator come to life.",
 		"The drawer doesn't open.",
 		['H']
+	));
+	cards.addCard(new Card(25,
+		new NumericInput(),
+		[34],
+		"As you crush the hollow egg, out tumble a handful of fire marbles.",
+		"Nothing happens.",
+		[1]
+	));
+	cards.addCard(new Card(42,
+		new NumericInput(),
+		[22],
+		"Focusing the lens on the blurry text of the paper reveals a clear message.",
+		"The text is still indecipherable.",
+		[9]
 	));
 	/*
 	cards.addCard(new Card(39,
