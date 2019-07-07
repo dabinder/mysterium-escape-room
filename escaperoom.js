@@ -6,7 +6,14 @@
 
 	//indicate prerequisites for accessing a particular card (e.g. card 3 must be completed before card 39)
 	const DEPENDENCIES = {
-		39: [3]
+		39: {
+			message: "The incinerator doesn't seem to be powered",
+			cards: [3]
+		},
+		8: {
+			message: "The imager appears to be locked",
+			cards: [31]
+		}
 	};
 
 	//final card provides alternate ending card after running out of time
@@ -184,10 +191,11 @@
 			if (cards.has(id)) {
 				//check for required sequence when applicable
 				if (DEPENDENCIES.hasOwnProperty(id)) {
-					for (let i = 0; i < DEPENDENCIES[id].length; i++) {
-						let card = DEPENDENCIES[id][i];
-						if (!submittedCards.includes(card)) {
-							popupMessage("This input is not yet available", true);
+					let dependency = DEPENDENCIES[id];
+					for (let i = 0; i < dependency.cards.length; i++) {
+						let dependentCard = dependency.cards[i];
+						if (!submittedCards.includes(dependentCard)) {
+							popupMessage(dependency.message, true);
 							return;
 						}
 					}
@@ -450,7 +458,7 @@
 		['LK'],
 		[6, 11, 16]
 	));
-
+	
 	//Kadish Tolesa
 	cards.addCard(new Card(5,
 		new ImageInput(1, "relto_pages", 8),
@@ -473,7 +481,7 @@
 	cards.addCard(new Card(31,
 		new NumericInput(1, 1, 8),
 		[7],
-		"You open the drawer to find a familiar-looking symbol.",
+		"You open the drawer to find a familiar-looking symbol. In the distance you hear something humming to life.",
 		"The drawer doesn't open.",
 		[29],
 		[31]
