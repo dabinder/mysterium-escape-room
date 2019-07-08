@@ -6,13 +6,13 @@
 
 	//indicate prerequisites for accessing a particular card (e.g. card 3 must be completed before card 39)
 	const DEPENDENCIES = {
-		39: {
-			message: "The incinerator doesn't seem to be powered",
-			cards: [3]
-		},
 		8: {
 			message: "The imager appears to be locked",
 			cards: [31]
+		},
+		39: {
+			message: "The incinerator doesn't seem to be powered",
+			cards: [3]
 		}
 	};
 
@@ -569,7 +569,6 @@
 		[9],
 		[22, 42]
 	));
-	/*
 	cards.addCard(new Card(39,
 		new ImageInput(4, "moiety_animals", 25),
 		[5, 24, 13, 4], //bat, elephant, mole, whark
@@ -578,5 +577,4 @@
 		['LA'], //need to collect LS on time out
 		[39]
 	));
-	*/
 })();
