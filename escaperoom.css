@@ -51,7 +51,7 @@ div#cardfields div.imagedropdown > img:hover {
 
 /* popup notices */
 div.popupnotice {
-	position: absolute;
+	position: fixed;
 	width: 300px;
 	min-height: 50px;
 	resize: both;
@@ -101,4 +101,17 @@ div.popupnotice > div.close::before {
 	border: thin solid;
 	color: white;
 	background-color: red;
+}
+
+/* timer */
+div#timercontainer {
+	position: fixed;
+	top: 10px;
+	right: 5px;
+	border-style: ridge;
+	border-radius: 5px;
+	border-color: gray;
+	background-color: cyan;
+	width: 50px;
+	text-align: center;
 }

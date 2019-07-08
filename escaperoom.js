@@ -24,6 +24,11 @@
 
 	let submittedCards = [];
 
+	//maximum time permitted (minutes)
+	const MAX_TIME = 45;
+	let baseTime = MAX_TIME,
+		timedOut = false;
+
 	class Input {
 		/**
 		 * create new generic input
@@ -132,8 +137,7 @@
 	 */
 	function failedEntry(message) {
 		popupMessage(message + " You have lost one minute.", true);
-
-		//TODO: subtract from timer
+		baseTime--;
 	}
 
 	/**
@@ -153,7 +157,7 @@
 		document.body.appendChild(noticeArea);
 		var x = noticeArea.clientHeight; //hack to get this to work in FF
 		noticeArea.className = "popupnotice";
-		
+
 		if (autoDismiss) {
 			//fade after 5 seconds
 			setTimeout(function () {
@@ -167,7 +171,7 @@
 			let close = document.createElement("div");
 			close.className = "close";
 			noticeArea.appendChild(close);
-			close.addEventListener("click", function (click){
+			close.addEventListener("click", function (click) {
 				noticeArea.parentNode.removeChild(noticeArea);
 			}, false);
 		}
@@ -232,7 +236,7 @@
 							let field = document.createElement("input");
 							field.type = "hidden";
 							field.name = "puzzlefield" + i;
-							
+
 							let span = document.createElement("span");
 							span.className = "imagefield";
 							let selectedImage = document.createElement("img");
@@ -304,7 +308,7 @@
 
 			//if we made it to the end with no failure, then give success message
 			let message = card.success + " Collect the following items:";
-			if (FINAL_CARD.id == card.id && false /* add timeout condition */ ) {
+			if (FINAL_CARD.id == card.id && timedOut) {
 				message += " Card " + FINAL_CARD.timeout;
 			} else {
 				card.collectItems.forEach(function (item) {
@@ -315,7 +319,7 @@
 			}
 			if (card.discardItems.length > 0) {
 				message += ". Discard the following cards: ";
-				card.discardItems.forEach (function (item) {
+				card.discardItems.forEach(function (item) {
 					if (parseInt(item) < 10) item = "0" + item;
 					message += item + ", ";
 				});
@@ -350,7 +354,52 @@
 				}
 			}
 		}, false);
+		
+		//initial display of timer
+		timer.textContent = ("0" + MAX_TIME).slice(-2) + ":00";
+		startTimer();
 	}, false);
+	
+	/**
+	 * start game timer
+	 */
+	function startTimer() {
+		let timer = document.getElementById("timer");
+		//timer script from https://stackoverflow.com/a/20618517/2136840
+		//start timer
+		let start = Date.now(),
+			diff,
+			minutes,
+			seconds;
+		
+		let countdown = setInterval(function () {
+			// get number of seconds elapsed
+			diff = (baseTime * 60) - (Date.now() - start) / 1000;
+			
+			if (diff >= baseTime * 60) {
+				timer.textContent = "00:00";
+				clearInterval(countdown);
+				timedOut = true;
+				return;
+			}
+			
+			// does the same job as parseInt truncates the float
+			minutes = (diff / 60) | 0;
+			seconds = (diff % 60) | 0;
+			
+			minutes = minutes < 10 ? "0" + minutes : minutes;
+			seconds = seconds < 10 ? "0" + seconds : seconds;
+			
+			timer.textContent = minutes + ":" + seconds;
+			
+			if (diff <= 0) {
+				// add one second so that the count down starts at the full duration
+				// example 05:00 not 04:59
+				start = Date.now() + 1000;
+			}
+		}, 500);
+	}
+
 
 	/**
 	 * @summary check whether given coordinates are located inside given element boundaries
@@ -405,10 +454,10 @@
 			}
 		}
 	}, false);
-	
+
 	//set of card => field mappings
 	let cards = new CardSet();
-	
+
 	//Tomahna
 	cards.addCard(new Card(6,
 		new NumericInput(),
@@ -458,7 +507,7 @@
 		['LK'],
 		[6, 11, 16]
 	));
-	
+
 	//Kadish Tolesa
 	cards.addCard(new Card(5,
 		new ImageInput(1, "relto_pages", 8),
@@ -494,7 +543,7 @@
 		['LR', 'G'],
 		[2, 8, 14, 15, 23, 29]
 	));
-	
+
 	//Riven
 	cards.addCard(new Card(3,
 		new NumericInput(3, 1, 9),
