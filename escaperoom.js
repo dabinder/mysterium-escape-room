@@ -15,6 +15,9 @@
 			cards: [3]
 		}
 	};
+	
+	//first card(s) to collect
+	const START_CARDS = ['LT']
 
 	//final card provides alternate ending card after running out of time
 	const FINAL_CARD = {
@@ -22,13 +25,14 @@
 		timeout: 'LS'
 	}
 
-	let submittedCards = [];
+	var submittedCards = [],
+		countdown;
 
 	//maximum time permitted (minutes)
 	const MAX_TIME = 45;
-	let baseTime = MAX_TIME,
+	var baseTime = MAX_TIME,
 		timedOut = false;
-
+	
 	class Input {
 		/**
 		 * create new generic input
@@ -130,7 +134,7 @@
 			}
 		}
 	}
-
+	
 	/**
 	 * incorrect entry in field
 	 * @param {String} message message to display
@@ -139,7 +143,7 @@
 		popupMessage(message + " You have lost one minute.", true);
 		baseTime--;
 	}
-
+	
 	/**
 	 * popup notification in corner of screen
 	 * @param {String} message message to display
@@ -179,15 +183,31 @@
 
 	//listen for card entries
 	document.addEventListener("DOMContentLoaded", function () {
-		let actionFlowContainer = document.getElementById("actionflowcontainer"),
+		let startContainer = document.getElementById("startcontainer"),
 			cardEntryContainer = document.getElementById("cardentrycontainer"),
+			startButton = document.getElementById("startbutton"),
 			cardEntryForm = document.getElementById("cardentryform"),
 			puzzleEntryContainer = document.getElementById("puzzleentrycontainer"),
 			puzzleEntryForm = document.getElementById("puzzleentryform"),
 			cardId = document.getElementById("cardid"),
 			inputInstructions = document.getElementById("inputinstructions"),
 			cardFields = document.getElementById("cardfields");
-
+			
+		//start game
+		startButton.addEventListener("click", function(event) {
+			event.preventDefault();
+			let instructions = document.getElementById("instructions");
+			instructions.open = false;
+			startContainer.classList.remove("active");
+			cardEntryContainer.classList.add("active");
+			let message = "Collect " +
+				(START_CARDS.length > 1 ? "cards" : "card") +
+				" " +
+				START_CARDS.join(", ");
+			popupMessage(message);
+			startTimer();			
+		}, false);
+		
 		//enter card number to view puzzle entry field
 		cardEntryForm.addEventListener("submit", function (event) {
 			event.preventDefault();
@@ -305,11 +325,17 @@
 					return;
 				}
 			}
-
+			
 			//if we made it to the end with no failure, then give success message
 			let message = card.success + " Collect the following items:";
-			if (FINAL_CARD.id == card.id && timedOut) {
-				message += " Card " + FINAL_CARD.timeout;
+			if (FINAL_CARD.id == card.id) {
+				//stop timer on final card
+				stopTimer();
+				
+				//bad ending if timed out
+				if (timedOut) {
+					message += " Card " + FINAL_CARD.timeout;
+				}
 			} else {
 				card.collectItems.forEach(function (item) {
 					if (!isNaN(item) && parseInt(item) < 10) item = "0" + item;
@@ -317,6 +343,7 @@
 				});
 				message = message.slice(0, -1); //remove trailing comma
 			}
+			
 			if (card.discardItems.length > 0) {
 				message += ". Discard the following cards: ";
 				card.discardItems.forEach(function (item) {
@@ -325,6 +352,7 @@
 				});
 				message = message.slice(0, -2); //remove trailing comma
 			}
+			
 			popupMessage(message, false);
 
 			//reset form for next card
@@ -357,7 +385,6 @@
 		
 		//initial display of timer
 		timer.textContent = ("0" + MAX_TIME).slice(-2) + ":00";
-		startTimer();
 	}, false);
 	
 	/**
@@ -372,13 +399,13 @@
 			minutes,
 			seconds;
 		
-		let countdown = setInterval(function () {
+		countdown = setInterval(function () {
 			// get number of seconds elapsed
 			diff = (baseTime * 60) - (Date.now() - start) / 1000;
 			
 			if (diff >= baseTime * 60) {
 				timer.textContent = "00:00";
-				clearInterval(countdown);
+				stopTimer();
 				timedOut = true;
 				return;
 			}
@@ -399,8 +426,14 @@
 			}
 		}, 500);
 	}
-
-
+	
+	/**
+	 * stop game timer
+	 */
+	function stopTimer() {
+		clearInterval(countdown);
+	}
+	
 	/**
 	 * @summary check whether given coordinates are located inside given element boundaries
 	 * @param {HTMLElement} element element to check
@@ -456,7 +489,7 @@
 	}, false);
 
 	//set of card => field mappings
-	let cards = new CardSet();
+	var cards = new CardSet();
 
 	//Tomahna
 	cards.addCard(new Card(6,

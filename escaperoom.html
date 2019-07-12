@@ -8,8 +8,36 @@
 	<script type="text/javascript" src="escaperoom.js"></script>
 </head>
 <body>
-	<div id="actionflowcontainer"></div>
-	<div id="cardentrycontainer">
+	<details id="instructions" open>
+		<summary>
+			<h3>Instructions</h3>
+		</summary>
+		<section>
+			<div>During your adventure, you will use this web app to enter any codes you decipher from the game.</div>
+			<div>If a card contains a symbol like this <img src="images/app.png" style="height:25px">, it means that card should be used with this app.</div>
+			
+			<div>At various times you will be instructed to collect a specific envelope.
+				These contain special items you will use alongside the cards to solve puzzles.
+			</div>
+			<div>If a number or letter appears in a circle, pick up the corresponding card (number) or envelope (letter).
+				For example, if you see <img src="images/cardnumber.png"> you would pick up card 16 and envelope A.
+			</div>
+			<dl>
+				<dt>Things to keep in mind:</dt>
+				<dd>Linking books function like Relto books - once you collect one, keep it for the whole game</dd>
+				<dd>Incorrect entries will cause you to lose time, so be careful</dd>
+				<dd>If instructed to discard card(s), that means those cards will not be used again</dd>
+				<dd>Hang onto all cards you collect until explicitly instructed to discard them</dd>
+			</dl>
+			<div>Click Start when you're ready to begin</div>
+		</section>
+	</details>
+	
+	<div id="startcontainer" class="container active">
+		<button id="startbutton">Start</button>		
+	</div>
+	
+	<div id="cardentrycontainer" class="container">
 		<form id="cardentryform">
 			<span>Enter a card number</span>
 			<input type="number" name="cardnumber">
@@ -17,7 +45,7 @@
 		</form>
 	</div>
 	
-	<div id="puzzleentrycontainer">
+	<div id="puzzleentrycontainer" class="container">
 		<form id="puzzleentryform">
 			<div id="cardid"></div>
 			<div id="inputinstructions"></div>
@@ -26,7 +54,7 @@
 		</form>
 	</div>
 	
-	<div id="timercontainer">
+	<div id="timerbox">
 		<span id="timer"></span>
 	</div>
 </body>
