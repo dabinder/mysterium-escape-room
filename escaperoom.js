@@ -22,7 +22,8 @@
 	//final card provides alternate ending card after running out of time
 	const FINAL_CARD = {
 		id: 39,
-		timeout: 'LS'
+		timeout: 'LS',
+		success: 'LA'
 	}
 
 	var submittedCards = [],
@@ -32,7 +33,7 @@
 	const MAX_TIME = 45;
 	var baseTime = MAX_TIME,
 		timedOut = false;
-	
+		
 	class Input {
 		/**
 		 * create new generic input
@@ -119,7 +120,7 @@
 			this.discardItems = discardItems;
 		}
 	}
-
+	
 	class CardSet extends Map {
 		/**
 		 * and add a new card to the set
@@ -180,33 +181,43 @@
 			}, false);
 		}
 	}
-
+	
 	//listen for card entries
 	document.addEventListener("DOMContentLoaded", function () {
-		let startContainer = document.getElementById("startcontainer"),
-			cardEntryContainer = document.getElementById("cardentrycontainer"),
-			startButton = document.getElementById("startbutton"),
-			cardEntryForm = document.getElementById("cardentryform"),
+		//pre-fill timer
+		document.getElementById("timer").textContent = baseTime + ":00";
+		
+		//check for resuming previous game
+		let startTime = getStorage("startTime");
+		
+		if (startTime != null &&
+			confirm("A previous session was found. Do you wish to continue where you left off?")
+		) {
+			startGame();
+			startTimer(startTime);
+			submittedCards = getStorage("submittedCards").split(",").map(s => parseInt(s));
+		} else {
+			let startButton = document.getElementById("startbutton");
+			
+			//start game
+			startButton.addEventListener("click", function(event) {
+				event.preventDefault();
+				let message = "Collect " +
+					(START_CARDS.length > 1 ? "cards" : "card") +
+					" " +
+					START_CARDS.join(", ");
+				popupMessage(message);
+				startGame();
+				startTimer();			
+			}, false);
+		}
+		
+		let cardEntryForm = document.getElementById("cardentryform"),
 			puzzleEntryContainer = document.getElementById("puzzleentrycontainer"),
 			puzzleEntryForm = document.getElementById("puzzleentryform"),
 			cardId = document.getElementById("cardid"),
 			inputInstructions = document.getElementById("inputinstructions"),
 			cardFields = document.getElementById("cardfields");
-			
-		//start game
-		startButton.addEventListener("click", function(event) {
-			event.preventDefault();
-			let instructions = document.getElementById("instructions");
-			instructions.open = false;
-			startContainer.classList.remove("active");
-			cardEntryContainer.classList.add("active");
-			let message = "Collect " +
-				(START_CARDS.length > 1 ? "cards" : "card") +
-				" " +
-				START_CARDS.join(", ");
-			popupMessage(message);
-			startTimer();			
-		}, false);
 		
 		//enter card number to view puzzle entry field
 		cardEntryForm.addEventListener("submit", function (event) {
@@ -335,6 +346,8 @@
 				//bad ending if timed out
 				if (timedOut) {
 					message += " Card " + FINAL_CARD.timeout;
+				} else {
+					message += " Card " + FINAL_CARD.success;
 				}
 			} else {
 				card.collectItems.forEach(function (item) {
@@ -362,6 +375,7 @@
 
 			//add to list of submitted cards
 			submittedCards.push(id);
+			setStorage("submittedCards", submittedCards);
 		}, false);
 
 		//clear image inputs on reset
@@ -388,16 +402,25 @@
 	}, false);
 	
 	/**
-	 * start game timer
+	 * @summary start game timer
+	 * @param {Number} startTime preset start time (for resuming game)
 	 */
-	function startTimer() {
+	function startTimer(startTime = 0) {
 		let timer = document.getElementById("timer");
 		//timer script from https://stackoverflow.com/a/20618517/2136840
 		//start timer
-		let start = Date.now(),
+		let start,
 			diff,
 			minutes,
 			seconds;
+		
+		if (startTime > 0) {
+			start = startTime;
+		} else {
+			start = Date.now();
+			//persist timer with cookie
+			setStorage("startTime", start);
+		}
 		
 		countdown = setInterval(function () {
 			// get number of seconds elapsed
@@ -428,10 +451,23 @@
 	}
 	
 	/**
-	 * stop game timer
+	 * @summary stop game timer
 	 */
 	function stopTimer() {
 		clearInterval(countdown);
+		localStorage.clear();
+	}
+	
+	/**
+	 * @summary hide instructions, show card entry
+	 */
+	function startGame() {
+		let startContainer = document.getElementById("startcontainer"),
+			cardEntryContainer = document.getElementById("cardentrycontainer"),
+			instructions = document.getElementById("instructions");
+		instructions.open = false;
+		startContainer.classList.remove("active");
+		cardEntryContainer.classList.add("active");
 	}
 	
 	/**
@@ -476,7 +512,31 @@
 			};
 		}
 	}
-
+	
+	/**
+	 * set value in local storage
+	 * @param {String} name item key
+	 * @param {String} value item value
+	 */
+	function setStorage(name, value) {
+		localStorage.setItem(name, value);
+	}
+	
+	/**
+	 * get value in local storage with simulated expiration based on startTime value
+	 * @param {String} name item key to grab
+	 */
+	function getStorage(name) {
+		let value = localStorage.getItem(name),
+			startTime = (name == "startTime") ? value : localStorage.getItem("startTime");
+		if ((baseTime * 60) - (Date.now() - startTime) / 1000 >= (baseTime * 60)) {
+			localStorage.clear();
+			return null;
+		} else {
+			return value;
+		}
+	}
+	
 	//remove active image dropdown(s) on clicking elsewhere on the page
 	document.addEventListener("mousedown", function (event) {
 		let activeElts = document.querySelectorAll("span.imagefield.active");
@@ -607,7 +667,7 @@
 		[5, 24, 13, 4], //bat, elephant, mole, whark
 		"The incinerator door opens. Fortunately the linking book inside is unburned.",
 		"The door doesn't open.",
-		['LA'], //need to collect LS on time out
+		[], //final card handled separately
 		[39]
 	));
 })();
