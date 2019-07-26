@@ -455,7 +455,7 @@
 	 */
 	function stopTimer() {
 		clearInterval(countdown);
-		localStorage.clear();
+		if (typeof window.localStorage != "undefined") localStorage.clear();
 	}
 	
 	/**
@@ -519,7 +519,9 @@
 	 * @param {String} value item value
 	 */
 	function setStorage(name, value) {
-		localStorage.setItem(name, value);
+		if (typeof window.localStorage != "undefined") {
+			localStorage.setItem(name, value);
+		}
 	}
 	
 	/**
@@ -527,6 +529,7 @@
 	 * @param {String} name item key to grab
 	 */
 	function getStorage(name) {
+		if (typeof window.localStorage == "undefined") return null;
 		let value = localStorage.getItem(name),
 			startTime = (name == "startTime") ? value : localStorage.getItem("startTime");
 		if ((baseTime * 60) - (Date.now() - startTime) / 1000 >= (baseTime * 60)) {
