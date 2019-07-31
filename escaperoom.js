@@ -143,6 +143,7 @@
 	function failedEntry(message) {
 		popupMessage(message + " You have lost one minute.", true);
 		baseTime--;
+		setStorage("basetime", baseTime);
 	}
 	
 	/**
@@ -191,9 +192,10 @@
 		let startTime = getStorage("startTime");
 		
 		if (startTime != null &&
-			(baseTime * 60) - (Date.now() - startTime) / 1000 < baseTime * 60 &&
+			(Date.now() - startTime) / 1000 < baseTime * 60 &&
 			confirm("A previous session was found. Do you wish to continue where you left off?")
 		) {
+			baseTime = getStorage("basetime");
 			startGame();
 			startTimer(startTime);
 			let storedCards = getStorage("submittedCards");
@@ -419,11 +421,13 @@
 	 * @param {Number} startTime preset start time (for resuming game)
 	 */
 	function startTimer(startTime = 0) {
+		setStorage("basetime", baseTime);
+				
 		let timer = document.getElementById("timer");
 		//timer script from https://stackoverflow.com/a/20618517/2136840
 		//start timer
 		let start,
-			diff,
+			remain,
 			minutes,
 			seconds;
 		
@@ -436,10 +440,10 @@
 		}
 		
 		countdown = setInterval(function () {
-			// get number of seconds elapsed
-			diff = (baseTime * 60) - (Date.now() - start) / 1000;
+			//get number of seconds elapsed
+			remain = baseTime * 60 - (Date.now() - start) / 1000;
 			
-			if (diff >= baseTime * 60) {
+			if (remain <= 0) {
 				timer.textContent = "00:00";
 				stopTimer();
 				timedOut = true;
@@ -447,19 +451,13 @@
 			}
 			
 			// does the same job as parseInt truncates the float
-			minutes = (diff / 60) | 0;
-			seconds = (diff % 60) | 0;
+			minutes = (remain / 60) | 0;
+			seconds = (remain % 60) | 0;
 			
 			minutes = minutes < 10 ? "0" + minutes : minutes;
 			seconds = seconds < 10 ? "0" + seconds : seconds;
 			
 			timer.textContent = minutes + ":" + seconds;
-			
-			if (diff <= 0) {
-				// add one second so that the count down starts at the full duration
-				// example 05:00 not 04:59
-				start = Date.now() + 1000;
-			}
 		}, 500);
 	}
 	
@@ -545,7 +543,8 @@
 		if (typeof window.localStorage == "undefined") return null;
 		let value = localStorage.getItem(name),
 			startTime = (name == "startTime") ? value : localStorage.getItem("startTime");
-		if ((baseTime * 60) - (Date.now() - startTime) / 1000 >= (baseTime * 60)) {
+		if (startTime - Date.now())
+		if ((Date.now() - startTime) / 1000 >= baseTime * 60) {
 			localStorage.clear();
 			return null;
 		} else {
@@ -674,7 +673,7 @@
 		new NumericInput(),
 		[22],
 		"Focusing the lens on the blurry text of the paper reveals a clear message.",
-		"The text is still indecipherable.",
+		"That doesn't seem to do anything.",
 		[9],
 		[22, 42]
 	));
