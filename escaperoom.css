@@ -31,7 +31,7 @@ div#cardfields img.selectedimage {
 	vertical-align: top;
 }
 
-div#cardfields > span.imagefield > div.imagedropdown {
+div#cardfields span.imagefield > div.imagedropdown {
 	position: absolute;
 	background-color: white;
 	max-height: 250px;
@@ -40,7 +40,7 @@ div#cardfields > span.imagefield > div.imagedropdown {
 	width: 125px;
 }
 
-div#cardfields > span.imagefield:not(.active) > div.imagedropdown {
+div#cardfields span.imagefield:not(.active) > div.imagedropdown {
 	display: none;
 }
 
@@ -48,6 +48,11 @@ div#cardfields div.imagedropdown > img:hover {
 	background-color: lightcyan;
 }
 
+@media screen and (max-width: 425px) {
+	div#cardfields > span.puzzlefield {
+		display: block;
+	}
+}
 
 /* popup notices */
 div.popupnotice {

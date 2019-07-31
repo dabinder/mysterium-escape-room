@@ -191,11 +191,15 @@
 		let startTime = getStorage("startTime");
 		
 		if (startTime != null &&
+			(baseTime * 60) - (Date.now() - startTime) / 1000 < baseTime * 60 &&
 			confirm("A previous session was found. Do you wish to continue where you left off?")
 		) {
 			startGame();
 			startTimer(startTime);
-			submittedCards = getStorage("submittedCards").split(",").map(s => parseInt(s));
+			let storedCards = getStorage("submittedCards");
+			if (storedCards != null) {
+				submittedCards = storedCards.split(",").map(s => parseInt(s));
+			}
 		} else {
 			let startButton = document.getElementById("startbutton");
 			
@@ -247,18 +251,21 @@
 				switch (input.type) {
 					case INPUT_TYPES.NUMERIC:
 						for (let i = 0; i < input.numFields; i++) {
-							let field = document.createElement("input");
+							let field = document.createElement("input"),
+								fieldContainer = document.createElement("span");
 							field.type = "number";
 							field.name = field.id = "puzzlefield" + i;
 							field.min = input.min;
+							fieldContainer.className = "puzzlefield";
 							if (input.max > 0) field.max = input.max;
 							if (input.numFields > 1) {
 								let label = document.createElement("label");
 								label.htmlFor = field.id;
 								label.textContent = String.fromCharCode(65 + i); //ASCII code for capital letters starts at 65
-								cardFields.appendChild(label);
+								fieldContainer.appendChild(label);
 							}
-							cardFields.appendChild(field);
+							fieldContainer.appendChild(field);
+							cardFields.appendChild(fieldContainer);
 						}
 						break;
 
@@ -269,7 +276,7 @@
 							field.name = "puzzlefield" + i;
 
 							let span = document.createElement("span");
-							span.className = "imagefield";
+							span.className = "puzzlefield imagefield";
 							let selectedImage = document.createElement("img");
 							selectedImage.className = "selectedimage";
 							cardFields.appendChild(field);
@@ -293,8 +300,14 @@
 								} else {
 									span.classList.add("active");
 									let coordinates = getAbsoluteCoordinates(this);
-									dropdown.style.left = coordinates.x + "px";
-									dropdown.style.top = coordinates.y + this.offsetHeight + "px";
+									//display menu to right of item in mobile
+									if (matchMedia("(max-width: 425px)").matches) {
+										dropdown.style.left = coordinates.x + this.offsetWidth + "px";
+										dropdown.style.top = coordinates.y + "px";
+									} else {
+										dropdown.style.left = coordinates.x + "px";
+										dropdown.style.top = coordinates.y + this.offsetHeight + "px";
+									}
 								}
 							}, false);
 							cardFields.appendChild(span);
@@ -418,7 +431,7 @@
 			start = startTime;
 		} else {
 			start = Date.now();
-			//persist timer with cookie
+			//persist timer with local storage
 			setStorage("startTime", start);
 		}
 		
