@@ -613,7 +613,7 @@
 		"You open the locked box to find a linking book.",
 		"The box doesn't open.",
 		['LK'],
-		[6, 11, 16]
+		[6, 11, 13, 16]
 	));
 
 	//Kadish Tolesa
@@ -683,6 +683,6 @@
 		"The incinerator door opens. Fortunately the linking book inside is unburned.",
 		"The door doesn't open.",
 		[], //final card handled separately
-		[39]
+		[32, 39]
 	));
 })();
