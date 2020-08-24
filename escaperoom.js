@@ -338,13 +338,9 @@
 					message += " before clicking submit";
 					popupMessage(message, true);
 					return;
-				} else if (card.expectedValues.length == 0) {
-					//empty expected values for red herring / fake fields with no correct entries
-					failedEntry(card.failure);
-					success = false;
-					this.reset();
-					return;
-				} else if (value != card.expectedValues[i]) {
+				} else if (card.expectedValues.length == 0 //empty expected values for red herring / fake fields with no correct entries
+					|| value != card.expectedValues[i]
+				) {
 					failedEntry(card.failure);
 					success = false;
 					this.reset();
