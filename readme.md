@@ -1,4 +1,4 @@
-# mysterium-escape-room
+# Mysterium Escape Room
 App support for Mysterium Escape Room
 
 This is meant to accompany the printed cards and physical items for the 2019 Mysterium Escape Room. To begin, open mysteriumescaperoom.html from a browser (Chrome, Firefox, and Edge are supported), and follow the instructions on the page.
