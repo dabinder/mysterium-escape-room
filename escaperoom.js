@@ -328,7 +328,8 @@
 			let id = parseInt(this.dataset.currentCard),
 				card = cards.get(id),
 				numFields = card.input.numFields;
-
+				
+			let success = true;
 			for (let i = 0; i < numFields; i++) {
 				let value = this.elements["puzzlefield" + i].value;
 				//make sure they entered something in the field
@@ -341,11 +342,13 @@
 				} else if (card.expectedValues.length == 0 //empty expected values for red herring / fake fields with no correct entries
 					|| value != card.expectedValues[i]
 				) {
-					failedEntry(card.failure);
 					success = false;
-					this.reset();
-					return;
 				}
+			}
+			if (!success) {
+				failedEntry(card.failure);
+				this.reset();
+				return;
 			}
 			
 			//if we made it to the end with no failure, then give success message
